@@ -1,6 +1,6 @@
 # SMTPKitten
 
-Creat
+Create
 
 ```swift
 let mail = Mail(

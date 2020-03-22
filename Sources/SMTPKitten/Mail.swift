@@ -15,25 +15,28 @@ public struct Mail {
     public var subject: String
     public var contentType: ContentType
     public var text: String
+    public var attachments: [MailAttachment]
     
     public init(
         from: MailUser,
         to: Set<MailUser>,
         cc: Set<MailUser> = [],
+        bcc: Set<MailUser> = [],
         subject: String,
         contentType: ContentType,
-        text: String
+        text: String,
+        attachments: [MailAttachment]
     ) {
         self.messageId = UUID().uuidString
         self.from = from
         self.to = to
         self.cc = cc
-        self.bcc = []
+        self.bcc = bcc
         self.subject = subject
         self.contentType = contentType
         self.text = text
+        self.attachments = attachments
     }
-    // TODO: Attachments
     
     internal var headers: [String: String] {
         var headers = [String: String]()
@@ -52,16 +55,9 @@ public struct Mail {
 
         headers["Subject"] = subject
         headers["MIME-Version"] = "1.0"
-        headers["Content-Type"] = contentType.rawValue
         
         return headers
     }
-
-//    var headersString: String {
-//        return headers.map { (key, value) in
-//            return "\(key): \(value)"
-//        }.joined(separator: "\r\n")
-//    }
 }
 
 public struct MailUser: Hashable, ExpressibleByStringLiteral {
@@ -87,5 +83,24 @@ public struct MailUser: Hashable, ExpressibleByStringLiteral {
         } else {
             return "<\(email)>"
         }
+    }
+}
+
+public struct MailAttachment {
+    public enum ContentDisposition: String {
+        case inline
+        case attachment
+    }
+
+    public let name: String
+    public let contentType: String
+    public let disposition: ContentDisposition
+    public let data: Data
+
+    public init(name: String, contentType: String, disposition: ContentDisposition = .attachment, data: Data) {
+        self.name = name
+        self.contentType = contentType
+        self.disposition = disposition
+        self.data = data
     }
 }

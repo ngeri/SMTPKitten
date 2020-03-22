@@ -27,14 +27,7 @@ final class SMTPClientOutboundHandler: MessageToByteEncoder {
         case .startMailData:
             out.writeStaticString("DATA")
         case .mailData(let mail):
-            var headersText = ""
-            for header in mail.headers {
-                headersText += "\(header.key): \(header.value)\r\n"
-            }
-            headersText += "Content-Type: text/plain; charset=\"utf-8\"\r\n"
-            headersText += "Content-Transfer-Encoding: 7bit\r\n"
-            out.writeString(headersText)
-            out.writeString("\r\n\(mail.text)\r\n.")
+            out.writeString(createRawMailText(mail))
         case .starttls:
             out.writeStaticString("STARTTLS")
         case .authenticatePlain:
@@ -56,6 +49,36 @@ final class SMTPClientOutboundHandler: MessageToByteEncoder {
         
         out.writeInteger(cr)
         out.writeInteger(lf)
+    }
+
+    private func createRawMailText(_ mail: Mail) -> String {
+        var rawText = ""
+        for header in mail.headers {
+            rawText += "\(header.key): \(header.value)\r\n"
+        }
+
+        let mixedBoundary = self.boundary()
+        rawText += "Content-Type: multipart/mixed; boundary=\"\(mixedBoundary)\"\r\n\r\n"
+        rawText += "--\(mixedBoundary)\r\n"
+        rawText += "Content-Type: text/plain; charset=\"utf-8\"\r\n"
+        rawText += "Content-Transfer-Encoding: 7bit\r\n\r\n"
+        rawText += "\(mail.text)\r\n\r\n"
+
+        for attachment in mail.attachments {
+            rawText += "--\(mixedBoundary)\r\n"
+            rawText += "Content-Type: \(attachment.contentType)\r\n"
+            rawText += "Content-Transfer-Encoding: base64\r\n"
+            rawText += "Content-Disposition: \(attachment.disposition.rawValue); filename=\"\(attachment.name)\"\r\n\r\n"
+            rawText += "\(attachment.data.base64EncodedString(options: .lineLength76Characters))\r\n\r\n"
+        }
+
+        rawText += "--\(mixedBoundary)--\r\n."
+
+        return rawText
+    }
+
+    private func boundary() -> String {
+        return UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
     }
 }
 
