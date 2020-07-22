@@ -44,16 +44,16 @@ public struct Mail {
         
         headers["Message-Id"] = "<\(UUID().uuidString)@localhost>"
         headers["Date"] = Date().smtpFormatted
-        headers["From"] = from.smtpFormatted
-        headers["To"] = to.map { $0.smtpFormatted }
+        headers["From"] = from.mime
+        headers["To"] = to.map { $0.mime }
             .joined(separator: ", ")
 
         if !cc.isEmpty {
-            headers["Cc"] = cc.map { $0.smtpFormatted }
+            headers["Cc"] = cc.map { $0.mime }
                 .joined(separator: ", ")
         }
 
-        headers["Subject"] = subject
+        headers["Subject"] = subject.mimeEncoded ?? ""
         headers["MIME-Version"] = "1.0"
         
         return headers
@@ -77,11 +77,11 @@ public struct MailUser: Hashable, ExpressibleByStringLiteral {
         self.name = nil
     }
 
-    var smtpFormatted: String {
-        if let name = name {
-            return "\(name) <\(email)>"
+    var mime: String {
+        if let name = name, let nameEncoded = name.mimeEncoded {
+            return "\(nameEncoded) <\(email)>"
         } else {
-            return "<\(email)>"
+            return email
         }
     }
 }
