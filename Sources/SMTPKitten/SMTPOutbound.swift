@@ -68,7 +68,7 @@ final class SMTPClientOutboundHandler: MessageToByteEncoder {
             rawText += "--\(mixedBoundary)\r\n"
             rawText += "Content-Type: \(attachment.contentType)\r\n"
             rawText += "Content-Transfer-Encoding: base64\r\n"
-            rawText += "Content-Disposition: \(attachment.disposition.rawValue); filename=\"\(attachment.name)\"\r\n\r\n"
+            rawText += "Content-Disposition: \(attachment.disposition.rawValue); filename=\"\(attachment.name.mimeEncoded ?? attachment.name)\"\r\n\r\n"
             rawText += "\(attachment.data.base64EncodedString(options: .lineLength76Characters))\r\n\r\n"
         }
 
