@@ -42,7 +42,7 @@ public struct Mail {
         var headers = [String: String]()
         headers.reserveCapacity(16)
         
-        headers["Message-Id"] = "<\(UUID().uuidString)@localhost>"
+        headers["Message-Id"] = "<\(messageId)@\(hostname)>"
         headers["Date"] = Date().smtpFormatted
         headers["From"] = from.mime
         headers["To"] = to.map { $0.mime }
@@ -57,6 +57,17 @@ public struct Mail {
         headers["MIME-Version"] = "1.0"
         
         return headers
+    }
+
+    /// Hostname from the email address.
+    private var hostname: String {
+        let fullEmail = from.email
+        if let atIndex = fullEmail.firstIndex(of: "@") {
+            let hostStart = fullEmail.index(after: atIndex)
+            return String(fullEmail[hostStart...])
+        } else {
+            return "localhost"
+        }
     }
 }
 
